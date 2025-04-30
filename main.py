@@ -6,7 +6,6 @@ import mediapipe as mp
 mpFaceMesh = mp.solutions.face_mesh
 face_mesh = mpFaceMesh.FaceMesh(max_num_faces=1)
 
-# Drawing utilities
 mpDrawing = mp.solutions.drawing_utils
 drawingSpec = mpDrawing.DrawingSpec(thickness=1, circle_radius=1)
 
@@ -17,8 +16,7 @@ cap = cv2.VideoCapture(0)
 LEFT_EYE = [33, 133, 160, 159, 158, 157, 173]
 RIGHT_EYE = [362, 263, 387, 386, 385, 384, 398]
 
-# Distraction counter
-distraction_counter = 0  # Tracks distraction duration
+distraction_counter = 0  
 
 # Get bounding box around the eye
 def get_eye_bbox(eye_landmarks):
@@ -26,14 +24,13 @@ def get_eye_bbox(eye_landmarks):
     y_coords = [point[1] for point in eye_landmarks]
     return min(x_coords), min(y_coords), max(x_coords), max(y_coords)
 
-# Check for circular contours
 def is_circle(contour):
     perimeter = cv2.arcLength(contour, True)
     area = cv2.contourArea(contour)
     if perimeter == 0:
         return False
     circularity = 4 * np.pi * (area / (perimeter ** 2))
-    return 0.5 < circularity < 1.2  # Range for circular shapes
+    return 0.5 < circularity < 1.2  
 
 while cap.isOpened():
     ret, frame = cap.read()
@@ -68,7 +65,6 @@ while cap.isOpened():
                 x1, y1, x2, y2 = get_eye_bbox(eye)
                 eye_region = grayFrame[y1:y2, x1:x2]
 
-                # Adaptive thresholding
                 threshold = cv2.adaptiveThreshold(
                     eye_region, 255,
                     cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -84,18 +80,15 @@ while cap.isOpened():
                         center = (int(px) + x1, int(py) + y1)
                         cv2.circle(frame, center, int(radius), (255, 0, 0), 2)
 
-            # ✅ Distraction Detection Logic (Integrated Here)
             center_x = (left_eye[0][0] + right_eye[0][0]) // 2  
             frame_center = frame.shape[1] // 2                 
 
-            # Detect if gaze shifts significantly from center
             if abs(center_x - frame_center) > 50:  
                 distraction_counter += 1           
             else:
                 distraction_counter = 0          
 
-            # Trigger distraction alert (e.g., buzz the bracelet)
-            if distraction_counter > 60:  # ~1 second if running at 30 FPS
+            if distraction_counter > 60:  
                 print("Distracted! Buzz the bracelet.")
 
     frame = cv2.resize(frame, (640, 360))
